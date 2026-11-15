@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Generator Soal Cerdas Guru - SMP & SMA</title>
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { margin: 0; background: #f1f5f9; color: #1e293b; }
+    .hidden { display: none !important; }
+    header { background: #3730a3; color: #fff; padding: 16px 24px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
+    header h1 { margin: 0; font-size: 20px; }
+    header p { margin: 2px 0 0; font-size: 12px; color: #c7d2fe; }
+    .api-box { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .api-box input { padding: 8px 12px; border-radius: 8px; border: none; width: 220px; font-size: 12px; }
+    .api-box select { padding: 8px 10px; border-radius: 8px; border: none; font-size: 12px; background: #e0e7ff; color: #1e1b4b; font-weight: 600; cursor: pointer; }
+    .api-box button { background: #1e1b4b; color: #fff; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; }
+    .api-box button:hover { background: #312e81; }
+    .container { max-width: 1200px; margin: 24px auto; padding: 0 16px; display: grid; grid-template-columns: 1fr 1.4fr; gap: 20px; }
+    @media (max-width: 850px) { .container { grid-template-columns: 1fr; } }
+    .card { background: #fff; padding: 22px; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; }
+    .card h2 { margin: 0 0 16px; font-size: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; }
+    .form-group { margin-bottom: 14px; }
+    label { display: block; font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 5px; text-transform: uppercase; }
+    select, input[type="text"], input[type="number"], textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: #fff; }
+    .row-2 { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; }
+    .check-box { background: #f8fafc; padding: 10px 12px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 16px; font-size: 13px; }
+    .check-box label { text-transform: none; font-weight: 500; display: flex; align-items: center; gap: 8px; margin: 6px 0; cursor: pointer; }
+    .btn-primary { width: 100%; background: #4338ca; color: #fff; border: none; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; }
+    .btn-primary:hover { background: #3730a3; }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+    .result-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 14px; }
+    .result-header h2 { border: none; margin: 0; padding: 0; }
+    .btn-sm { padding: 6px 12px; border-radius: 6px; border: none; font-size: 12px; font-weight: 600; cursor: pointer; }
+    .btn-copy { background: #e2e8f0; color: #1e293b; }
+    .btn-word { background: #059669; color: #fff; margin-left: 6px; }
+    .placeholder, .loading { text-align: center; padding: 60px 20px; color: #64748b; font-size: 14px; }
+    .spinner { width: 36px; height: 36px; border: 4px solid #e0e7ff; border-top: 4px solid #4338ca; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 12px; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+    #hasilKonten { line-height: 1.65; font-size: 14px; white-space: pre-wrap; color: #0f172a; }
+    .status-badge { font-size: 11px; background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; padding: 6px 10px; border-radius: 8px; margin-top: 12px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div>
+      <h1>Generator Soal Cerdas Guru</h1>
+      <p>Asisten Pembuat Asesmen Kurikulum Merdeka (Khusus SMP &amp; SMA/SMK)</p>
+    </div>
+    <div class="api-box">
+      <select id="providerSelect" onchange="ubahProvider()" title="Pilih Penyedia AI Gratis">
+        <option value="groq">Groq AI (Gratis &amp; Cepat)</option>
+        <option value="gemini">Google Gemini API</option>
+      </select>
+      <input type="password" id="apiKeyInput" placeholder="Tempel API Key di sini..." />
+      <button type="button" onclick="simpanApiKey()">Simpan Key</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="card">
+      <h2>Pengaturan Asesmen</h2>
+      <form id="soalForm">
+        <div class="form-group">
+          <label>1. Jenjang &amp; Kelas (Fase)</label>
+          <select id="jenjang">
+            <optgroup label="Sekolah Menengah Pertama (SMP / MTs)">
+              <option value="SMP Kelas 7 (Fase D)" selected>SMP Kelas 7 (Fase D)</option>
+              <option value="SMP Kelas 8 (Fase D)">SMP Kelas 8 (Fase D)</option>
+              <option value="SMP Kelas 9 (Fase D)">SMP Kelas 9 (Fase D)</option>
+            </optgroup>
+            <optgroup label="Sekolah Menengah Atas (SMA / SMK / MA)">
+              <option value="SMA/SMK Kelas 10 (Fase E)">SMA/SMK Kelas 10 (Fase E)</option>
+              <option value="SMA/SMK Kelas 11 (Fase F)">SMA/SMK Kelas 11 (Fase F)</option>
+              <option value="SMA/SMK Kelas 12 (Fase F)">SMA/SMK Kelas 12 (Fase F)</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>2. Mata Pelajaran</label>
+          <input type="text" id="mapel" required placeholder="Contoh: IPA, Matematika, Bahasa Indonesia, Sejarah" />
+        </div>
+
+        <div class="form-group">
+          <label>3. Materi Pokok / Tujuan Pembelajaran</label>
+          <textarea id="materi" rows="2" required placeholder="Contoh: Sistem pernapasan manusia dan gangguannya"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>4. Model &amp; Level Kognitif</label>
+          <select id="modelSoal">
+            <option value="Campuran Proporsional (LOTS, MOTS, HOTS)">Campuran Proporsional (LOTS, MOTS, HOTS)</option>
+            <option value="HOTS (Penalaran &amp; Analisis Kontekstual)">Fokus HOTS (Penalaran &amp; Stimulus Kasus)</option>
+            <option value="MOTS (Penerapan Konsep)">Fokus MOTS (Aplikasi Konsep)</option>
+            <option value="LOTS (Pemahaman Dasar)">Fokus LOTS (Pemahaman Dasar)</option>
+            <option value="Literasi &amp; Numerasi Standar AKM">Model Literasi &amp; Numerasi (AKM)</option>
+          </select>
+        </div>
+
+        <div class="form-group row-2">
+          <div>
+            <label>5. Tipe Bentuk Soal</label>
+            <select id="tipeSoal">
+              <option value="Pilihan Ganda Tunggal">Pilihan Ganda</option>
+              <option value="Pilihan Ganda Kompleks">Pilihan Ganda Kompleks</option>
+              <option value="Isian Singkat">Isian Singkat</option>
+              <option value="Uraian / Esai">Uraian / Esai</option>
+              <option value="Benar atau Salah">Benar / Salah</option>
+              <option value="Kombinasi Pilihan Ganda dan Uraian">Kombinasi (PG + Uraian)</option>
+            </select>
+          </div>
+          <div>
+            <label>6. Jumlah</label>
+            <input type="number" id="jumlahSoal" min="1" max="30" value="10" required />
+          </div>
+        </div>
+
+        <div class="check-box">
+          <label><input type="checkbox" id="includeKisi" checked /> Sertakan Kisi-Kisi Soal</label>
+          <label><input type="checkbox" id="includeKunci" checked /> Sertakan Kunci Jawaban &amp; Pembahasan</label>
+        </div>
+
+        <button type="submit" id="btnGenerate" class="btn-primary">Buat Soal Otomatis (AI)</button>
+      </form>
+      <div class="status-badge" id="infoProvider">
+        <strong>Rekomendasi Anti-Gagal:</strong> Gunakan <b>Groq AI</b> (daftar gratis di <a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a> tanpa kartu kredit) atau <b>Google Gemini API</b>. Soal akan langsung muncul di panel kanan dan siap diunduh ke Word.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="result-header">
+        <h2>Hasil Naskah Asesmen</h2>
+        <div>
+          <button type="button" onclick="salinHasil()" class="btn-sm btn-copy">Salin Teks</button>
+          <button type="button" onclick="unduhWord()" class="btn-sm btn-word">Unduh Word (.doc)</button>
+        </div>
+      </div>
+
+      <div id="placeholderText" class="placeholder">
+        <strong>Naskah soal Anda akan tampil di sini</strong><br /><br />
+        Silakan pilih jenjang kelas (SMP/SMA), mata pelajaran, dan model soal di panel kiri, lalu tekan tombol <b>Buat Soal Otomatis (AI)</b>.
+      </div>
+
+      <div id="loadingIndicator" class="loading hidden">
+        <div class="spinner"></div>
+        <strong>Sedang menyusun soal sesuai kaidah evaluasi...</strong><br />
+        <span>Mohon tunggu sekitar 5–15 detik</span>
+      </div>
+
+      <div id="hasilKonten" class="hidden"></div>
+    </div>
+  </div>
+
+  <script>
+    window.addEventListener('DOMContentLoaded', function() {
+      const savedProvider = localStorage.getItem('guru_ai_provider') || 'groq';
+      document.getElementById('providerSelect').value = savedProvider;
+      ubahProvider(false);
+    });
+
+    function ubahProvider(clearInput = true) {
+      const provider = document.getElementById('providerSelect').value;
+      localStorage.setItem('guru_ai_provider', provider);
+      const inputEl = document.getElementById('apiKeyInput');
+      const savedKey = localStorage.getItem('guru_api_key_' + provider) || '';
+      if (clearInput || savedKey) {
+        inputEl.value = savedKey;
+      }
+      inputEl.placeholder = provider === 'groq' 
+        ? 'Tempel Groq API Key (gsk_...) di sini...' 
+        : 'Tempel Gemini API Key (AIza...) di sini...';
+    }
+
+    function simpanApiKey() {
+      const provider = document.getElementById('providerSelect').value;
+      const key = document.getElementById('apiKeyInput').value.trim();
+      if (!key) return alert('Masukkan API Key terlebih dahulu.');
+      localStorage.setItem('guru_api_key_' + provider, key);
+      alert('API Key ' + (provider === 'groq' ? 'Groq' : 'Gemini') + ' berhasil disimpan di browser Anda!');
+    }
+
+    function rakitPrompt() {
+      const jenjang = document.getElementById('jenjang').value;
+      const mapel = document.getElementById('mapel').value.trim();
+      const materi = document.getElementById('materi').value.trim();
+      const modelSoal = document.getElementById('modelSoal').value;
+      const tipeSoal = document.getElementById('tipeSoal').value;
+      const jumlahSoal = document.getElementById('jumlahSoal').value;
+      const includeKisi = document.getElementById('includeKisi').checked;
+      const includeKunci = document.getElementById('includeKunci').checked;
+      const opsi = jenjang.includes('SMA') ? '5 opsi (A, B, C, D, E)' : '4 opsi (A, B, C, D)';
+
+      return `Berperanlah sebagai Guru Profesional Kurikulum Merdeka di Indonesia.
+Buatkan perangkat asesmen yang rapi dan siap cetak:
+- Jenjang: ${jenjang}
+- Mata Pelajaran: ${mapel}
+- Materi: ${materi}
+- Level Kognitif: ${modelSoal}
+- Tipe Soal: ${tipeSoal} (${opsi} untuk Pilihan Ganda)
+- Jumlah: ${jumlahSoal} soal
+
+Susun rapi tanpa tanda bintang markdown berlebihan dengan urutan:
+1. IDENTITAS ASESMEN
+${includeKisi ? '2. KISI-KISI SOAL (No, Indikator Soal, Level Kognitif)
+' : ''}3. NASKAH SOAL SIAP CETAK
+${includeKunci ? '4. KUNCI JAWABAN & PEMBAHASAN' : ''}`;
+    }
+
+    async function panggilGroq(apiKey, prompt) {
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + apiKey
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.7
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error((data.error && data.error.message) || 'Gagal terhubung ke Groq API.');
+      return data.choices[0].message.content;
+    }
+
+    async function panggilGemini(apiKey, prompt) {
+      const listRes = await fetch('https://generativelanguage.googleapis.com/v1beta/models?key=' + encodeURIComponent(apiKey));
+      const listData = await listRes.json();
+      if (!listRes.ok) throw new Error((listData.error && listData.error.message) || 'API Key Gemini tidak valid.');
+
+      const validModel = (listData.models || []).find(m => 
+        m.supportedGenerationMethods && 
+        m.supportedGenerationMethods.includes('generateContent') &&
+        m.name.includes('gemini') && !m.name.includes('vision') && !m.name.includes('embedding')
+      );
+      if (!validModel) throw new Error('Tidak ditemukan model Gemini aktif pada API Key ini.');
+
+      const res = await fetch('https://generativelanguage.googleapis.com/v1beta/' + validModel.name + ':generateContent?key=' + encodeURIComponent(apiKey), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error((data.error && data.error.message) || 'Gagal menghasilkan soal dari Gemini.');
+      return data.candidates[0].content.parts[0].text;
+    }
+
+    document.getElementById('soalForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const provider = document.getElementById('providerSelect').value;
+      const apiKey = document.getElementById('apiKeyInput').value.trim();
+      if (!apiKey) return alert('Silakan masukkan API Key di pojok kanan atas terlebih dahulu.');
+
+      const btn = document.getElementById('btnGenerate');
+      const placeholder = document.getElementById('placeholderText');
+      const loading = document.getElementById('loadingIndicator');
+      const hasilKonten = document.getElementById('hasilKonten');
+
+      btn.disabled = true;
+      placeholder.classList.add('hidden');
+      hasilKonten.classList.add('hidden');
+      loading.classList.remove('hidden');
+
+      try {
+        const prompt = rakitPrompt();
+        const teksHasil = provider === 'groq' 
+          ? await panggilGroq(apiKey, prompt) 
+          : await panggilGemini(apiKey, prompt);
+
+        hasilKonten.textContent = teksHasil;
+        loading.classList.add('hidden');
+        hasilKonten.classList.remove('hidden');
+      } catch (err) {
+        loading.classList.add('hidden');
+        placeholder.classList.remove('hidden');
+        alert('Terjadi kesalahan: ' + err.message);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    function salinHasil() {
+      const el = document.getElementById('hasilKonten');
+      if (el.classList.contains('hidden') || !el.textContent.trim()) return alert('Belum ada soal untuk disalin.');
+      navigator.clipboard.writeText(el.textContent).then(() => alert('Naskah soal berhasil disalin!'));
+    }
+
+    function unduhWord() {
+      const el = document.getElementById('hasilKonten');
+      if (el.classList.contains('hidden') || !el.textContent.trim()) return alert('Belum ada soal untuk diunduh.');
+      const mapel = document.getElementById('mapel').value.trim() || 'Asesmen';
+      const html = "<html><head><meta charset='utf-8'></head><body style='font-family:Times New Roman;font-size:12pt;white-space:pre-wrap;'>" + el.textContent + "</body></html>";
+      const blob = new Blob(['﻿', html], { type: 'application/msword' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'Soal_' + mapel.replace(/\s+/g, '_') + '.doc';
+      link.click();
+    }
+  </script>
+</body>
+</html>
